@@ -5,6 +5,45 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 import app
 
+def test_management_backups_and_targets(tmp_path):
+    import gzip,json
+    from datetime import date
+    isolated=tmp_path/'management.sqlite3';shutil.copyfile(app.DB,isolated)
+    with patch.object(app,'DB',isolated):
+        a=TestClient(app.app);b=TestClient(app.app)
+        for client,email in [(a,'manage-a@example.test'),(b,'manage-b@example.test')]:
+            assert client.post('/api/register',json={'email':email,'password':'long-password','name':'Management QA'}).status_code==200
+        assert a.post('/api/accounts',json={'name':'Payroll','opening':'1000','purpose':'salary'}).status_code==200
+        w=a.get('/api/workspace').json();pay=next(x for x in w['accounts'] if x['name']=='Payroll')
+        assert pay['purpose']=='salary' and pay['balance']==100000
+        body={'name':'Payroll reserve','purpose':'salary','archived':True}
+        assert b.post('/api/accounts/'+str(pay['id']),json=body).status_code==404
+        assert a.post('/api/accounts/'+str(pay['id']),json=body).status_code==200
+        assert a.post('/api/transactions',json={'date':str(date.today()),'kind':'expense','description':'Salary','amount':100,'account':pay['id']}).status_code==400
+        body['archived']=False;assert a.post('/api/accounts/'+str(pay['id']),json=body).status_code==200
+        pref={'name':'Renamed business','theme':'light','accent':'#0f8b81','motion':False,'categories':['Payroll','Supplies']}
+        assert a.post('/api/settings',json=pref).status_code==200
+        assert b.get('/api/workspace').json()['business']['name']=='Management QA'
+        assert a.post('/api/settings',json={**pref,'accent':'not-a-color'}).status_code==422
+        target={'id':'test-goal','name':'Reserve target','metric':'cash','amount':'2000','deadline':None}
+        assert a.post('/api/targets',json={'targets':[target]}).status_code==200
+        assert not b.get('/api/workspace').json()['targets']
+        response=a.get('/api/backup');assert response.status_code==200
+        backup=json.loads(gzip.decompress(response.content));assert backup['version']==2
+        assert len(response.content)<len(json.dumps(backup).encode())
+        assert 'password' not in backup and 'salt' not in backup
+        corrupt=json.loads(json.dumps(backup));corrupt['entries'][0]['debit']+=1
+        assert a.post('/api/restore',json=corrupt).status_code==400
+        assert a.get('/api/workspace').json()['transactions']
+        assert a.post('/api/restore',json=backup).status_code==200
+        restored=a.get('/api/workspace').json();assert restored['settings']['accent']=='#0f8b81'
+        assert restored['targets'][0]['name']=='Reserve target'
+        assert next(x for x in restored['accounts'] if x['name']=='Payroll reserve')['balance']==100000
+        with app.connect() as c:assert c.execute('SELECT SUM(debit)-SUM(credit) FROM entries').fetchone()[0]==0
+        assert a.post('/api/logout').status_code==200
+        assert a.post('/api/login',json={'email':'manage-a@example.test','password':'long-password'}).status_code==200
+        assert a.get('/api/workspace').json()['settings']['theme']=='light'
+
 def test_workspace_accounting_and_isolation(tmp_path):
     isolated=tmp_path/'test.sqlite3';shutil.copyfile(app.DB,isolated)
     with patch.object(app,'DB',isolated):
@@ -76,7 +115,7 @@ def test_exports_authenticated_content_and_file_integrity(tmp_path):
                 pdf[0].get_pixmap(matrix=fitz.Matrix(1.5,1.5)).save('data/export-verification.png')
             if fmt=='csv':
                 z=zipfile.ZipFile(io.BytesIO(r.content));assert 'accounts.csv' in z.namelist();assert '1,234.56' in z.read('accounts.csv').decode('utf-8-sig')
-            if fmt=='xlsx':assert set(load_workbook(io.BytesIO(r.content)).sheetnames)=={'Summary','Accounts','Transactions','Forecast','Budget','Read me'}
+            if fmt=='xlsx':assert set(load_workbook(io.BytesIO(r.content)).sheetnames)=={'Summary','Accounts','Transactions','Forecast','Budget','Targets','Read me'}
             if fmt=='json':
                 data=r.json();assert 'sessions' not in data and 'password' not in r.text and data['data']['business']['name']=='Export audit'
         assert c.get('/api/export/csv?scope=transactions').headers['content-type'].startswith('text/csv')

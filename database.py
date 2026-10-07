@@ -23,6 +23,7 @@ class Connection:
     def executemany(self,sql,rows):
         with self.connection.cursor() as c:c.executemany(sql.replace('?','%s'),rows)
     def executescript(self,script):
+        self.connection.execute('SELECT pg_advisory_xact_lock(1819241809)')
         for statement in script.split(';'):
             if not statement.strip():continue
             statement=statement.replace('id INTEGER PRIMARY KEY','id BIGSERIAL PRIMARY KEY')

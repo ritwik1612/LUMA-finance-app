@@ -9,3 +9,6 @@ __pycache__
 .git
 start.ps1
 VERIFICATION.md
+static/vendor
+.agents
+skills-lock.json

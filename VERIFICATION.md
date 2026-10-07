@@ -13,13 +13,15 @@ Verified business workflow: UI -> FastAPI -> SQLite -> displayed balances and re
 | Forecast | 12 months, three scenarios; mathematical tests and live values | Pass |
 | Budget | Live $100.10 against $90 produces $10.10 over-budget warning | Pass |
 | Persistence | Reload retains balances; logout/login preserves plan | Pass |
-| PDF export | Authenticated HTTP 200, valid six-page PDF, rendered layout inspected | Pass |
-| CSV export | Valid per-report CSV and all-report ZIP with five tables | Pass |
-| Excel export | Six sheets, numeric financial values, valid workbook | Pass |
+| PDF export | Authenticated HTTP 200, summary cards and vector forecast chart; rendered pages inspected | Pass |
+| CSV export | Valid per-report CSV and all-report ZIP with six tables | Pass |
+| Excel export | Seven sheets, numeric financial values, valid workbook | Pass |
 | JSON export | Complete data, no passwords or sessions | Pass |
 
-Three backend integration tests cover the listed workflows and rejection cases. Frontend totals, month grouping and forecast scenario tests pass. JavaScript syntax passes. Live export controls all display Download ready; all export API requests returned HTTP 200; console errors empty. The browser automation download event timed out, so the resulting browser download file path was not inspected; generated file bytes were validated directly through API tests.
+Four backend integration tests cover the listed workflows, account management, appearance settings, target isolation, compressed backups, balanced restore and rejection cases. Frontend totals, month grouping and forecast scenario tests pass. JavaScript syntax passes. Generated export bytes are validated through API tests.
+
+UI update verification: light theme with custom teal accent and dark theme with blue accent; saved settings; live projection changed to $7,158.77 before saving; growth output labels update; target creation and persistence. All seven workspace routes fit a 390px viewport without page-wide horizontal overflow. Navigation becomes a two-row touch grid. Device emulation verifies responsive layout, not every physical phone/browser combination.
 
 Fixed during audit: whitespace-only account names and transaction descriptions; Excel amount types.
 
-Temporary QA workspace removed. Existing businesses and source documents retained. Prototype excludes invoice management, transaction edits/deletion, payroll/tax, bank sync and JSON restore.
+Prototype excludes invoice management, transaction edits/deletion, payroll processing/tax filing and bank sync. Restoring version-2 Settings backups is supported. Google Drive integration and real-time push synchronization are not implemented.

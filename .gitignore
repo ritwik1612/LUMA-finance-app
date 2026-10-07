@@ -12,3 +12,4 @@ test-results/
 TESTING DOCUMENTS/
 .agents/
 skills-lock.json
+static/vendor/

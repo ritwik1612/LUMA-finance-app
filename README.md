@@ -1,6 +1,6 @@
 # LUMA Finance App
 
-A business finance dashboard with a dark liquid-glass interface. Record income and expenses, track cash and bank balances, compare twelve-month forecasts, monitor a monthly budget, and export reports.
+A business finance dashboard with light/dark liquid-glass themes and custom accent colours. Record transactions, manage cash and salary reserve accounts, explore live twelve-month projections, monitor budgets and financial targets, and export reports.
 
 **Live application:** https://luma-finance-beta.vercel.app
 
@@ -15,7 +15,9 @@ LUMA is a cash-based finance prototype. You enter figures manually. It has no do
 5. Check **Overview** to see updated balances and performance.
 6. Enter assumptions on **Forecast**, then select **Save assumptions**.
 7. Set your monthly target on **Budget** and compare it with actual expenses.
-8. Use **Export reports** to download your financial reports.
+8. Create cash reserve or monthly revenue goals on **Targets**.
+9. Use **Settings** to customize the theme and download a compressed restorable backup.
+10. Use **Export reports** to download financial reports.
 
 Returning users choose **Already have a workspace? Sign in**. **Sign out** ends the current session. Each business login has its own accounts, transactions and plan. Team invitations and multiple user roles are not implemented.
 
@@ -55,7 +57,7 @@ The **Add transaction** button is available across the workspace:
 | Owner funding | Initial funds or additional owner contributions. | Increases cash/bank and owner equity; excluded from revenue. |
 | Transfer | Movement between two cash/bank accounts. | Decreases the source and increases the destination; combined cash and profit are unchanged. |
 
-Enter a positive amount with at most two decimal places, a date of today or earlier, an account and a description. Transfers require a different destination account. Categories are free text; blank categories become General. Future planned activity belongs in Forecast.
+Enter a positive amount with at most two decimal places, a date of today or earlier, an account and a description. Transfers require a different destination account. Category suggestions depend on the transaction type: for example, Salaries & wages, Rent, Software and Marketing for expenses. Add custom categories in Settings, or type another category directly. Blank categories become General. Future planned activity belongs in Forecast.
 
 Every transaction generates equal debit and credit entries. The current interface cannot edit/delete transactions, import statements, attach documents or schedule recurring entries. Check the details before saving.
 
@@ -63,7 +65,9 @@ Every transaction generates equal debit and credit entries. The current interfac
 
 Account cards show the balances of your recorded cash and bank accounts. Select **Add account**, enter a name and optionally provide an opening balance. The opening balance creates an owner-funding entry dated today, so it does not inflate revenue.
 
-Use separate accounts for a business bank, petty cash or other cash holdings. Balances come from journal entries, not a live bank connection. Negative balances are permitted and may indicate an overdraft or missing entries. Account renaming, deletion and bank reconciliation are not implemented.
+Account purposes include Business bank, Cash wallet, Savings, Salary / payroll and Tax reserve. A salary account is a cash reserve for payroll, not an employee database or automated payroll service. Transfer funds into it and record salary payments as expenses with Salaries & wages.
+
+Select **Manage account** to rename an account, change its purpose, or archive/restore it. Archived accounts cannot be used for new transactions; their balances and history remain in totals, reports and backups. Accounts are retained rather than deleted to preserve journal references. Bank reconciliation is not implemented.
 
 ### Forecast — `/forecast`
 
@@ -75,7 +79,7 @@ This page projects twelve months beginning with the next calendar month. Startin
 - **Cost growth:** percentage change in expenses each subsequent month.
 - **Monthly spending budget:** the target also used by Budget.
 
-Select **Save assumptions** to persist the plan. The cash chart and monthly table show projected revenue, expenses and closing cash. Forecast and Budget use the same saved assumption record.
+Revenue and expense inputs and the growth sliders update the chart, monthly table, projected closing cash, cash change and first funding gap immediately. These changes are a preview until you select **Save assumptions**. Scenario buttons work with the preview. **Reset to saved plan** discards it. Leaving the page also discards unsaved scenario inputs. Exports always use the saved plan. Forecast and Budget share the saved assumption record; Budget also previews the remaining amount while inputs change.
 
 | Scenario | Revenue growth | Cost growth |
 | --- | --- | --- |
@@ -103,16 +107,32 @@ The progress bar stops at 100%, but the percentage and overspend figure still sh
 
 The **Budget & forecast settings** form edits the same revenue, expense, growth and budget assumptions used on Forecast. Changes affect both pages.
 
+### Targets — `/targets`
+
+Create up to 20 named goals for available cash reserves or current-month revenue, with a target amount and optional deadline. Cards show the measured amount, percentage reached, amount remaining and deadline status. A reached target is marked Achieved. Monthly revenue progress resets each calendar month; cash progress uses all cash/bank balances. Remove a target if it no longer applies. Targets sync with the business account and are included in reports and restorable backups.
+
+Overview also displays four setup milestones: opening funds, income, expenses and a saved forecast. This tracks setup activity, not creditworthiness or financial health.
+
+### Settings — `/settings`
+
+Rename the business, choose Dark glass or Light glass, use a preset accent or the custom colour picker, enable/disable fluid animation, and add custom categories (one per line, up to 40). Preview theme changes immediately, then select **Save settings** to sync them with the account. The app adjusts accent text brightness for readability and respects the device's reduced-motion preference.
+
+The data panel explains cloud storage, shows the signed-in email, currency and transaction count, and provides backup/restore. The same email and password on the live app accesses the same database records across devices. Refresh to see edits made elsewhere; continuous real-time synchronization is not implemented.
+
+**Download compressed backup** saves a `.json.gz` file containing accounts, journal entries, assumptions, appearance, categories and targets, without passwords or sessions. Compression reduces file size but does not encrypt the backup. Keep it in private storage. Google Drive can hold a downloaded copy; no automatic Google integration is implemented.
+
+To restore, choose a Settings backup (`.json.gz` or decompressed version-2 JSON), select **Review restore**, read the replacement summary and confirm you backed up the current workspace. Restore replaces financial records and settings; login credentials stay unchanged. Currency must match. The server checks references, transaction types and balanced entries before committing the replacement atomically. Files are limited to 15 MB after decompression in the UI; backups support up to 500 accounts and 10,000 transactions. Regular JSON report exports lack the journal references required for restore.
+
 ### Export center — available on every workspace page
 
-Select **Export reports**, choose All reports or a specific scope (Summary, Accounts, Transactions, Forecast or Budget), then choose a format.
+Select **Export reports**, choose All reports or Summary, Accounts, Transactions, Forecast, Budget or Targets, then choose a format.
 
 | Format | Output |
 | --- | --- |
-| PDF | Printable report tables. Charts are not embedded. |
+| PDF | Branded report with summary metric cards, structured tables, page headers/footers and a vector cash-projection chart in Forecast. Uses the saved accent colour. |
 | Excel / XLSX | Workbook with separate sheets and numeric financial cells. |
 | CSV | Single table for a specific scope; All reports downloads a ZIP of tables and a README. |
-| JSON | Structured data snapshot without passwords or session tokens. Restore/import is not implemented. |
+| JSON | Structured report snapshot without passwords or session tokens. Use Settings for a restorable backup. |
 
 Forecast exports include all three scenarios using saved assumptions. Downloads require sign-in and use the current business's data. Export means generated financial reports, not original testing documents.
 
@@ -142,7 +162,7 @@ python3 -m venv .venv
 .venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
-Stop the server with Ctrl+C. Local mode creates `data/finance.sqlite3` automatically. To back up the full local database, stop the server and copy this file to a safe location. JSON downloads are readable snapshots, but the app cannot restore them yet.
+Stop the server with Ctrl+C. Local mode creates `data/finance.sqlite3` automatically. Use Settings for compressed backups and restore. Alternatively, stop the server and copy the SQLite file for a complete local database backup.
 
 ## PostgreSQL and Vercel
 
@@ -184,12 +204,13 @@ Exports → ReportLab PDF / openpyxl XLSX / CSV ZIP / JSON
 | exports.py | Report data and PDF/CSV/XLSX/JSON generation. |
 | static/index.html | Entry screen, navigation and dialogs. |
 | static/app.js | Metrics, charts, forecasts, navigation, forms and downloads. |
+| static/features.js | Themes, categories, account management, live scenario previews, targets and backup/restore controls. |
 | static/style.css | Responsive dark liquid-glass design. |
 | tests/test_finance.py | Backend isolation, validation, journal and export checks. |
 | tests/frontend.cjs | Totals, calendar grouping and forecast calculations. |
 | start.ps1 | Windows startup helper. |
 
-The database contains businesses, sessions, accounts, journal records, debit/credit entries and plans. Journal amounts are integer cents. Aggregate balances are normalized to integer cents in API output.
+The database contains businesses, sessions, accounts, journal records, debit/credit entries, plans, account metadata, preferences and targets. Journal amounts are integer cents. Aggregate balances are normalized to integer cents. Query indexes support business/account lookups. Active records remain queryable rows; gzip compresses backups and larger HTTP responses. Generated reports are produced on demand and are not stored in the database.
 
 | Method | API | Purpose |
 | --- | --- | --- |
@@ -198,6 +219,11 @@ The database contains businesses, sessions, accounts, journal records, debit/cre
 | POST | /api/logout | End current session. |
 | GET | /api/workspace | Read signed-in business data. |
 | POST | /api/accounts | Add account and optional opening balance. |
+| POST | /api/accounts/{id} | Rename, change purpose or archive/restore an owned account. |
+| POST | /api/settings | Save business name, theme and categories. |
+| POST | /api/targets | Save financial targets. |
+| GET | /api/backup | Download compressed restorable backup. |
+| POST | /api/restore | Validate and atomically replace financial records from backup. |
 | POST | /api/transactions | Post balanced transaction. |
 | POST | /api/plan | Save forecast/budget assumptions. |
 | GET | /api/export/{format}?scope=all | Export pdf, csv, xlsx or json. |
@@ -217,7 +243,7 @@ The hosted PostgreSQL flow has been checked for registration, sign-in, persisted
 ## Limitations and troubleshooting
 
 - Cash-based management reporting only: no accrual accounting, invoices, receivables/payables, payroll, tax filing, inventory or bank connections.
-- No transaction editing/deletion, recurring entries, account renaming/deletion, imports, JSON restore or password recovery.
+- No transaction editing/deletion, recurring entries, account deletion, statement imports or password recovery. Version-2 Settings backup restore is supported.
 - No team roles, approval workflow or complete audit-log interface.
 - One reporting currency per business; no foreign exchange conversion.
 - Calendar-month views use browser dates; transaction validation/export dates use the server date. These may differ near timezone boundaries.
@@ -231,3 +257,7 @@ If the app cannot start, confirm dependencies are installed and port 8000 is ava
 The original `TESTING DOCUMENTS` folder stays in the local workspace for manual reference. No figures or documents are preloaded. Testing documents, uploaded copies, databases, screenshots, credentials, virtual environments and local integration metadata are excluded from this repository. The former FIN-DOC implementation is backed up outside the active project and is not part of LUMA's runtime.
 
 No project license has been selected. Review ownership and licensing before redistributing third-party documents or distributing this project for reuse.
+
+## Phone layouts
+
+Navigation becomes a compact two-row grid. Settings, targets and account cards stack vertically; forms use one column and controls have larger touch areas. Charts resize with their containers. Wide financial tables scroll inside their panels. There is no native mobile app or offline mode.
