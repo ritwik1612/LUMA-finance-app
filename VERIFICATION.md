@@ -22,6 +22,8 @@ Four backend integration tests cover the listed workflows, account management, a
 
 UI update verification: light theme with custom teal accent and dark theme with blue accent; saved settings; live projection changed to $7,158.77 before saving; growth output labels update; target creation and persistence. All seven workspace routes fit a 390px viewport without page-wide horizontal overflow. Navigation becomes a two-row touch grid. Device emulation verifies responsive layout, not every physical phone/browser combination.
 
+PostgreSQL migrations and integration flows were exercised in disposable schemas; management/isolation/restore checks and export checks passed. Production verification confirmed that an independent login retrieves the same balances, settings, plan and targets; compressed backup and restore passed; PDF/CSV/XLSX/JSON and the target-only report returned successfully. Existing business data and source documents were preserved.
+
 Fixed during audit: whitespace-only account names and transaction descriptions; Excel amount types.
 
 Prototype excludes invoice management, transaction edits/deletion, payroll processing/tax filing and bank sync. Restoring version-2 Settings backups is supported. Google Drive integration and real-time push synchronization are not implemented.
