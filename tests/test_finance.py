@@ -21,6 +21,8 @@ def test_management_backups_and_targets(tmp_path):
         assert a.post('/api/accounts/'+str(pay['id']),json=body).status_code==200
         assert a.post('/api/transactions',json={'date':str(date.today()),'kind':'expense','description':'Salary','amount':100,'account':pay['id']}).status_code==400
         body['archived']=False;assert a.post('/api/accounts/'+str(pay['id']),json=body).status_code==200
+        for kind,description in [('income','Customer receipt'),('expense','Salary payment')]:
+            assert a.post('/api/transactions',json={'date':str(date.today()),'kind':kind,'description':description,'amount':100,'account':pay['id']}).status_code==200
         pref={'name':'Renamed business','theme':'light','accent':'#0f8b81','motion':False,'categories':['Payroll','Supplies']}
         assert a.post('/api/settings',json=pref).status_code==200
         assert b.get('/api/workspace').json()['business']['name']=='Management QA'
@@ -37,6 +39,7 @@ def test_management_backups_and_targets(tmp_path):
         assert a.get('/api/workspace').json()['transactions']
         assert a.post('/api/restore',json=backup).status_code==200
         restored=a.get('/api/workspace').json();assert restored['settings']['accent']=='#0f8b81'
+        assert [t['description'] for t in restored['transactions']]==[t['description'] for t in backup['journal']]
         assert restored['targets'][0]['name']=='Reserve target'
         assert next(x for x in restored['accounts'] if x['name']=='Payroll reserve')['balance']==100000
         with app.connect() as c:assert c.execute('SELECT SUM(debit)-SUM(credit) FROM entries').fetchone()[0]==0

@@ -266,7 +266,7 @@ def restore(body:Backup,request:Request):
         for a in body.accounts:
             aid=c.execute('INSERT INTO accounts(business,name,type) VALUES(?,?,?)',(bid,a.name,a.type)).lastrowid;mapping[a.id]=aid
             c.execute('INSERT INTO account_profiles VALUES(?,?,?)',(aid,a.purpose,int(a.archived)))
-        for j in body.journal:
+        for j in sorted(body.journal,key=lambda row:row.id):
             d=next(e for e in groups[j.id] if e.debit);cr=next(e for e in groups[j.id] if e.credit)
             add_journal(c,bid,j.date,j.kind,j.description,j.category,j.amount,mapping[d.account],mapping[cr.account])
         c.execute('INSERT INTO plans VALUES(?,?) ON CONFLICT(business) DO UPDATE SET payload=excluded.payload',(bid,body.plan.model_dump_json()))
