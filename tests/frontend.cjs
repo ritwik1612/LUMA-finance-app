@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const src=fs.readFileSync('static/app.js','utf8');
+const data={business:{currency:'USD'},accounts:[{type:'asset',balance:100000},{type:'asset',balance:20000},{type:'revenue',balance:-50000}],transactions:[{date:new Date().toISOString().slice(0,10),kind:'income',amount:50000},{date:new Date().toISOString().slice(0,10),kind:'expense',amount:20000},{date:new Date().toISOString().slice(0,10),kind:'transfer',amount:10000},{date:new Date().toISOString().slice(0,10),kind:'funding',amount:100000}],plan:{revenue:1000,expenses:800,growth:5,cost_growth:2,budget:900}};
+const ctx={workspace:data,scenario:'base',Date,Math,Number,Intl};vm.createContext(ctx);
+for(const [start,end] of [['function monthKey','function chart'],['function forecastRows','const labels']])vm.runInContext(src.slice(src.indexOf(start),src.indexOf(end)),ctx);
+const total=ctx.totals();assert.equal(total.cash,120000);assert.equal(total.revenue,50000);assert.equal(total.expenses,20000);assert.equal(total.profit,30000);
+const base=ctx.forecastRows();assert.equal(base.length,12);assert.equal(base[0].cash,140000);assert.equal(base[1].revenue,105000);assert.equal(base[1].expenses,81600);
+ctx.scenario='optimistic';const opt=ctx.forecastRows();ctx.scenario='cautious';const low=ctx.forecastRows();assert(opt[11].cash>base[11].cash&&base[11].cash>low[11].cash);
+assert.equal(ctx.monthRows().length,6);assert.equal(ctx.monthRows()[5].revenue,50000);
+console.log('Frontend totals, month grouping and all three forecast scenarios passed.');

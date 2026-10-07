@@ -1,0 +1,14 @@
+.venv/
+.env
+__pycache__/
+.pytest_cache/
+*.pyc
+data/
+test-results/
+
+.vercel
+.env*
+!.env.example
+TESTING DOCUMENTS/
+.agents/
+skills-lock.json

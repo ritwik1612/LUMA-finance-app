@@ -1,0 +1,11 @@
+.venv
+.env*
+data
+TESTING DOCUMENTS
+tests
+__pycache__
+.pytest_cache
+*.pyc
+.git
+start.ps1
+VERIFICATION.md
